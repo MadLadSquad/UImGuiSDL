@@ -7,11 +7,11 @@ Supported subsystems:
 1. All functions in the Input interface
 1. Custom Monitors(with extended SDL functions)
 1. All renderers:
-   - OpenGL
-   - WebGPU
+   - OpenGL + in Emscripten
+   - WebGPU(Emscripten-only)
    - Vulkan
    - [UImGuiRendererExamples](https://github.com/MadLadSquad/UImGuiRendererExamples):
-     - bgfx
+     - bgfx + in Emscripten
      - dx12
      - metal
 

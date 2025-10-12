@@ -5,6 +5,7 @@ CKeyState UImGuiSDL::WindowSDL::getKey(const CKeys key) noexcept
 {
     // TODO: Implement
     //return keys[key];
+    return CKeyState::KeyStatePressed;
 }
 
 void UImGuiSDL::WindowSDL::setCursorVisibility(const UImGui::CursorVisibilityState visibility) noexcept

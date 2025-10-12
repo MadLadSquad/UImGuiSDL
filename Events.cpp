@@ -117,20 +117,21 @@ void UImGuiSDL::WindowSDL::handleEvent(::SDL_Event& e) noexcept
         break;
 
     case SDL_EVENT_MOUSE_MOTION:
-
-        static bool bFirst = true;
-        if (bFirst)
         {
+            static bool bFirst = true;
+            if (bFirst)
+            {
+                mouseLastPos.x = e.motion.x;
+                mouseLastPos.y = e.motion.y;
+                bFirst = false;
+            }
+
+            mouseOffset.x = e.motion.x - mouseLastPos.x;
+            mouseOffset.y = mouseLastPos.y - e.motion.y;
+
             mouseLastPos.x = e.motion.x;
             mouseLastPos.y = e.motion.y;
-            bFirst = false;
         }
-
-        mouseOffset.x = e.motion.x - mouseLastPos.x;
-        mouseOffset.y = mouseLastPos.y - e.motion.y;
-
-        mouseLastPos.x = e.motion.x;
-        mouseLastPos.y = e.motion.y;
         break;
 
     case SDL_EVENT_MOUSE_BUTTON_DOWN:

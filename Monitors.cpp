@@ -99,15 +99,7 @@ void* UImGuiSDL::MonitorSDL::getPlatformHandle(UImGui::MonitorData& data) noexce
 #ifdef __EMSCRIPTEN__
     return (void*)UImGui::Renderer::data().emscriptenCanvas;
 #elifdef _WIN32
-    return reinterpret_cast<void*>(
-               const_cast<char*>(
-                   glfwGetWin32Monitor(
-                       reinterpret_cast<GLFWmonitor*>(
-                           data.id
-                       )
-                   )
-               )
-    );
+    return reinterpret_cast<void*>(data.id);
 #elifdef __APPLE__
     return reinterpret_cast<void*>(data.id);
 #else

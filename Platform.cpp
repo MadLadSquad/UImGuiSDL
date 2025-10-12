@@ -27,7 +27,10 @@ void UImGuiSDL::WindowSDL::Platform_setWindowAlwaysOnTop() noexcept
 void UImGuiSDL::WindowSDL::Platform_setWindowAlwaysOnBottom() noexcept
 {
 #ifdef _WIN32
-    auto win = glfwGetWin32Window(window);
+    const SDL_PropertiesID props = SDL_GetWindowProperties(window);
+    HWND win = nullptr;
+    win = static_cast<HWND>(SDL_GetPointerProperty(props, SDL_PROP_WINDOW_WIN32_HWND_POINTER, win));
+
     SetWindowPos(win, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
     //DefWindowProcA(win, WM_WINDOWPOSCHANGING, 0, 0);
 #elifdef __APPLE__
@@ -102,18 +105,15 @@ void UImGuiSDL::WindowSDL::Platform_setWindowShowingOnPager(const bool bShowInPa
 {
     this->bShowOnPager = bShowInPager;
 #ifdef _WIN32
+    const SDL_PropertiesID props = SDL_GetWindowProperties(window);
+    HWND win = nullptr;
+    win = static_cast<HWND>(SDL_GetPointerProperty(props, SDL_PROP_WINDOW_WIN32_HWND_POINTER, win));
+    
+    LONG_PTR style = GetWindowLongPtr(win, GWL_EXSTYLE);
     if (!bShowOnPager)
-    {
-        auto win = glfwGetWin32Window(window);
-        LONG_PTR style = GetWindowLongPtr(win, GWL_EXSTYLE);
         SetWindowLongPtr(win, GWL_EXSTYLE, (style & ~WS_EX_APPWINDOW) | WS_EX_TOOLWINDOW);
-    }
     else
-    {
-        auto win = glfwGetWin32Window(window);
-        LONG_PTR style = GetWindowLongPtr(win, GWL_EXSTYLE);
         SetWindowLongPtr(win, GWL_EXSTYLE, (style & WS_EX_APPWINDOW) | ~WS_EX_TOOLWINDOW);
-    }
 #elif !defined(__APPLE__) && !defined(__EMSCRIPTEN__)
     if (Platform_getCurrentWindowPlatform() == UIMGUI_WINDOW_PLATFORM_X11 && !bShowOnPager)
     {
@@ -164,18 +164,15 @@ void UImGuiSDL::WindowSDL::Platform_setWindowShowingOnTaskbar(const bool bShowOn
 {
     this->bShowOnTaskbar = bShowOnTaskbar;
 #ifdef _WIN32
+    const SDL_PropertiesID props = SDL_GetWindowProperties(window);
+    HWND win = nullptr;
+    win = static_cast<HWND>(SDL_GetPointerProperty(props, SDL_PROP_WINDOW_WIN32_HWND_POINTER, win));
+
+    LONG_PTR style = GetWindowLongPtr(win, GWL_EXSTYLE);
     if (!bShowOnPager)
-    {
-        auto win = glfwGetWin32Window(window);
-        LONG_PTR style = GetWindowLongPtr(win, GWL_EXSTYLE);
         SetWindowLongPtr(win, GWL_EXSTYLE, (style & ~WS_EX_APPWINDOW) | WS_EX_TOOLWINDOW);
-    }
     else
-    {
-        auto win = glfwGetWin32Window(window);
-        LONG_PTR style = GetWindowLongPtr(win, GWL_EXSTYLE);
         SetWindowLongPtr(win, GWL_EXSTYLE, (style & WS_EX_APPWINDOW) | ~WS_EX_TOOLWINDOW);
-    }
 #elif !defined(__APPLE__) && !defined(__EMSCRIPTEN__)
     if (Platform_getCurrentWindowPlatform() == UIMGUI_WINDOW_PLATFORM_X11 && !bShowOnTaskbar)
     {
@@ -256,7 +253,10 @@ void UImGuiSDL::WindowSDL::Platform_setWindowType(UImGui::String type) noexcept
 size_t UImGuiSDL::WindowSDL::Platform_getWindowID() noexcept
 {
 #ifdef _WIN32
-    return GetWindowLong(glfwGetWin32Window(window), GWL_ID);
+    const SDL_PropertiesID props = SDL_GetWindowProperties(window);
+    HWND win = nullptr;
+    win = static_cast<HWND>(SDL_GetPointerProperty(props, SDL_PROP_WINDOW_WIN32_HWND_POINTER, win));
+    return GetWindowLong(win, GWL_ID);
 #elifdef __APPLE__
     const auto props = SDL_GetWindowProperties(window);
     void* win = nullptr;
@@ -314,7 +314,9 @@ void* UImGuiSDL::WindowSDL::Platform_getNativeWindowHandle() noexcept
     void* win = nullptr;
     return SDL_GetPointerProperty(props, SDL_PROP_WINDOW_COCOA_WINDOW_POINTER, win);
 #elifdef _WIN32
-    return glfwGetWin32Window(window);
+    const SDL_PropertiesID props = SDL_GetWindowProperties(window);
+    HWND win = nullptr;
+    return static_cast<HWND>(SDL_GetPointerProperty(props, SDL_PROP_WINDOW_WIN32_HWND_POINTER, win));
 #elifdef __EMSCRIPTEN__
     return (void*)UImGui::Renderer::data().emscriptenCanvas;
 #else

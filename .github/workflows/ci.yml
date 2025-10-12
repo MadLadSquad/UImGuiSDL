@@ -1,0 +1,389 @@
+name: CI
+env:
+  BUILD_CONFIGURATION: Release
+on: [ push, pull_request ]
+jobs:
+  macOS:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          lfs: false
+          submodules: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Checkout submodules
+        shell: bash
+        run: |
+          git submodule sync --recursive
+          git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
+      - name: Get dependencies
+        run: |
+          brew install glfw yaml-cpp vulkan-headers vulkan-loader vulkan-tools vulkan-utility-libraries vulkan-validationlayers vulkan-extensionlayer sdl3
+      - name: Install framework
+        shell: bash
+        run: |
+          git clone https://github.com/MadLadSquad/UntitledImGuiFramework --recursive
+          cd UntitledImGuiFramework || exit
+          ./install.sh ci
+          cd Projects || exit
+          git clone https://github.com/MadLadSquad/UImGuiDemo.git --recursive
+          cd ../UVKBuildTool/build || exit
+          ./UVKBuildTool --generate ../../Projects/UImGuiDemo/
+          cd ../../Projects/UImGuiDemo || exit
+
+          git clone https://github.com/libsdl-org/SDL --recursive
+          echo "\
+          function(custom_setup_step)
+            set(SDL_AUDIO_DEFAULT OFF)
+            set(SDL_GPU_DEFAULT OFF)
+            set(SDL_RENDER_DEFAULT OFF)
+            set(SDL_CAMERA_DEFAULT OFF)
+            set(SDL_JOYSTICK_DEFAULT OFF)
+            set(SDL_HAPTIC_DEFAULT OFF)
+            set(SDL_HIDAPI_DEFAULT OFF)
+            set(SDL_POWER_DEFAULT OFF)
+            set(SDL_SENSOR_DEFAULT OFF)
+            set(SDL_DIALOG_DEFAULT OFF)
+            set(SDL_TRAY_DEFAULT OFF)
+        
+            set(SDL_AUDIO OFF)
+            set(SDL_GPU OFF)
+            set(SDL_RENDER OFF)
+            set(SDL_CAMERA OFF)
+            set(SDL_JOYSTICK OFF)
+            set(SDL_HAPTIC OFF)
+            set(SDL_HIDAPI OFF)
+            set(SDL_POWER OFF)
+            set(SDL_SENSOR OFF)
+            set(SDL_DIALOG OFF)
+            set(SDL_TRAY OFF)
+        
+            set(SDL_TEST_LIBRARY OFF)
+            set(SDL_TESTS OFF)
+            set(SDL_EXAMPLES OFF)
+        
+            add_subdirectory(SDL/)
+          endfunction()
+          
+          function(custom_compile_step)
+            if (EMSCRIPTEN)
+              multicast(target_link_options PRIVATE "-sUSE_SDL=3")
+              target_link_libraries(UImGuiDemo SDL3::SDL3-static)
+            elseif (WIN32)
+              target_link_libraries(UntitledImGuiFramework SDL3)
+            else ()
+              target_link_libraries(UImGuiDemoLib SDL3)
+            endif ()
+            include_directories(SDL/include/)
+          endfunction()
+          
+          set(ENABLE_PRE_SCRIPT ON)
+          set(ENABLE_POST_SCRIPT ON)" > Config/cmake/UImGuiDemo.cmake
+          
+          cd Source/ || exit
+          git clone https://github.com/MadLadSquad/UImGuiSDL --recursive
+          cd .. || exit
+          
+          git clone https://github.com/ocornut/imgui.git --recursive
+          cd imgui || exit
+          git checkout docking
+          cd .. || exit
+          
+          cp imgui/backends/imgui_impl_sdl3.{cpp,h} Source/UImGuiSDL/
+          rm -rf imgui/
+      - name: Build
+        shell: bash
+        run: |
+          cd UntitledImGuiFramework/Projects/UImGuiDemo/ || exit
+          mkdir build
+          cd build || exit
+          cmake .. -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=RELEASE
+          make -j "$(sysctl -n hw.ncpu)"
+  Linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          lfs: false
+          submodules: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Checkout submodules
+        shell: bash
+        run: |
+          git submodule sync --recursive
+          git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
+      - name: Get dependencies
+        run: | 
+          sudo apt update && sudo apt-get install x11-xserver-utils libgl1-mesa-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev gcc make g++ libxmu-dev libxi-dev libgl-dev libglu1-mesa-dev libvulkan1 mesa-vulkan-drivers vulkan-tools libvulkan-dev libasound2-dev libflac-dev libogg-dev libtool libvorbis-dev libopus-dev libsndfile1-dev libssl-dev zlib1g zlib1g-dev libglfw3 libglfw3-dev libyaml-cpp-dev libxkbcommon-dev libsdl3-dev
+      - name: Install framework
+        shell: bash
+        run: |
+          git clone https://github.com/MadLadSquad/UntitledImGuiFramework --recursive
+          cd UntitledImGuiFramework || exit
+          ./install.sh ci
+          cd Projects || exit
+          git clone https://github.com/MadLadSquad/UImGuiDemo.git --recursive
+          cd ../UVKBuildTool/build || exit
+          ./UVKBuildTool --generate ../../Projects/UImGuiDemo/
+          cd ../../Projects/UImGuiDemo || exit
+
+          git clone https://github.com/libsdl-org/SDL --recursive
+          echo "\
+          function(custom_setup_step)
+            set(SDL_AUDIO_DEFAULT OFF)
+            set(SDL_GPU_DEFAULT OFF)
+            set(SDL_RENDER_DEFAULT OFF)
+            set(SDL_CAMERA_DEFAULT OFF)
+            set(SDL_JOYSTICK_DEFAULT OFF)
+            set(SDL_HAPTIC_DEFAULT OFF)
+            set(SDL_HIDAPI_DEFAULT OFF)
+            set(SDL_POWER_DEFAULT OFF)
+            set(SDL_SENSOR_DEFAULT OFF)
+            set(SDL_DIALOG_DEFAULT OFF)
+            set(SDL_TRAY_DEFAULT OFF)
+          
+            set(SDL_AUDIO OFF)
+            set(SDL_GPU OFF)
+            set(SDL_RENDER OFF)
+            set(SDL_CAMERA OFF)
+            set(SDL_JOYSTICK OFF)
+            set(SDL_HAPTIC OFF)
+            set(SDL_HIDAPI OFF)
+            set(SDL_POWER OFF)
+            set(SDL_SENSOR OFF)
+            set(SDL_DIALOG OFF)
+            set(SDL_TRAY OFF)
+          
+            set(SDL_TEST_LIBRARY OFF)
+            set(SDL_TESTS OFF)
+            set(SDL_EXAMPLES OFF)
+          
+            add_subdirectory(SDL/)
+          endfunction()
+          
+          function(custom_compile_step)
+            if (EMSCRIPTEN)
+              multicast(target_link_options PRIVATE "-sUSE_SDL=3")
+              target_link_libraries(UImGuiDemo SDL3::SDL3-static)
+            elseif (WIN32)
+              target_link_libraries(UntitledImGuiFramework SDL3)
+            else ()
+              target_link_libraries(UImGuiDemoLib SDL3)
+            endif ()
+            include_directories(SDL/include/)
+          endfunction()
+          
+          set(ENABLE_PRE_SCRIPT ON)
+          set(ENABLE_POST_SCRIPT ON)" > Config/cmake/UImGuiDemo.cmake
+          
+          cd Source/ || exit
+          git clone https://github.com/MadLadSquad/UImGuiSDL --recursive
+          cd .. || exit
+          
+          git clone https://github.com/ocornut/imgui.git --recursive
+          cd imgui || exit
+          git checkout docking
+          cd .. || exit
+          
+          cp imgui/backends/imgui_impl_sdl3.{cpp,h} Source/UImGuiSDL/
+          rm -rf imgui/
+      - name: Build
+        shell: bash
+        run: |
+          cd UntitledImGuiFramework/Projects/UImGuiDemo/ || exit
+          mkdir build
+          cd build || exit
+          cmake .. -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=RELEASE
+          make -j "$(grep -c processor /proc/cpuinfo 2> /dev/null)"
+  Windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          lfs: true
+          submodules: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set MSBuild env
+        uses: microsoft/setup-msbuild@main
+      - name: Checkout submodules
+        shell: bash
+        run: |
+          git submodule sync --recursive
+          git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
+      - name: Install framework
+        shell: bash
+        run: |
+          git clone https://github.com/MadLadSquad/UntitledImGuiFramework --recursive
+          cd UntitledImGuiFramework || exit
+          ./install.sh ci
+          cd Projects || exit
+          git clone https://github.com/MadLadSquad/UImGuiDemo.git --recursive
+          cd ../UVKBuildTool/build || exit
+          ./UVKBuildTool --generate ../../Projects/UImGuiDemo/
+          cd ../../Projects/UImGuiDemo || exit
+
+          git clone https://github.com/libsdl-org/SDL --recursive
+          echo "\
+          function(custom_setup_step)
+            set(SDL_AUDIO_DEFAULT OFF)
+            set(SDL_GPU_DEFAULT OFF)
+            set(SDL_RENDER_DEFAULT OFF)
+            set(SDL_CAMERA_DEFAULT OFF)
+            set(SDL_JOYSTICK_DEFAULT OFF)
+            set(SDL_HAPTIC_DEFAULT OFF)
+            set(SDL_HIDAPI_DEFAULT OFF)
+            set(SDL_POWER_DEFAULT OFF)
+            set(SDL_SENSOR_DEFAULT OFF)
+            set(SDL_DIALOG_DEFAULT OFF)
+            set(SDL_TRAY_DEFAULT OFF)
+          
+            set(SDL_AUDIO OFF)
+            set(SDL_GPU OFF)
+            set(SDL_RENDER OFF)
+            set(SDL_CAMERA OFF)
+            set(SDL_JOYSTICK OFF)
+            set(SDL_HAPTIC OFF)
+            set(SDL_HIDAPI OFF)
+            set(SDL_POWER OFF)
+            set(SDL_SENSOR OFF)
+            set(SDL_DIALOG OFF)
+            set(SDL_TRAY OFF)
+          
+            set(SDL_TEST_LIBRARY OFF)
+            set(SDL_TESTS OFF)
+            set(SDL_EXAMPLES OFF)
+          
+            add_subdirectory(SDL/)
+          endfunction()
+          
+          function(custom_compile_step)
+            if (EMSCRIPTEN)
+              multicast(target_link_options PRIVATE "-sUSE_SDL=3")
+              target_link_libraries(UImGuiDemo SDL3::SDL3-static)
+            elseif (WIN32)
+              target_link_libraries(UntitledImGuiFramework SDL3)
+            else ()
+              target_link_libraries(UImGuiDemoLib SDL3)
+            endif ()
+            include_directories(SDL/include/)
+          endfunction()
+          
+          set(ENABLE_PRE_SCRIPT ON)
+          set(ENABLE_POST_SCRIPT ON)" > Config/cmake/UImGuiDemo.cmake
+          
+          cd Source/ || exit
+          git clone https://github.com/MadLadSquad/UImGuiSDL --recursive
+          cd .. || exit
+          
+          git clone https://github.com/ocornut/imgui.git --recursive
+          cd imgui || exit
+          git checkout docking
+          cd .. || exit
+          
+          cp imgui/backends/imgui_impl_sdl3.{cpp,h} Source/UImGuiSDL/
+          rm -rf imgui/
+      - name: Build
+        shell: bash
+        run: |
+          cd UntitledImGuiFramework/Projects/UImGuiDemo/ || exit
+          mkdir build
+          cd build || exit
+          cmake .. -DCMAKE_BUILD_TYPE=RELEASE
+          MSBuild.exe UImGuiDemo.sln -property:Configuration=Release -property:Platform=x64 -property:maxCpuCount="$(grep -c processor /proc/cpuinfo 2> /dev/null)" || exit
+  WASM:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          lfs: false
+          submodules: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Checkout submodules
+        shell: bash
+        run: |
+          git submodule sync --recursive
+          git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
+      - name: Get dependencies
+        run: | 
+          sudo apt update && sudo apt-get install x11-xserver-utils libgl1-mesa-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev gcc make g++ libxmu-dev libxi-dev libgl-dev libglu1-mesa-dev libvulkan1 mesa-vulkan-drivers vulkan-tools libvulkan-dev libasound2-dev libflac-dev libogg-dev libtool libvorbis-dev libopus-dev libsndfile1-dev libssl-dev zlib1g zlib1g-dev libglfw3 libglfw3-dev libyaml-cpp-dev libxkbcommon-dev libsdl3-dev
+      - uses: mymindstorm/setup-emsdk@v14
+      - name: Install framework
+        shell: bash
+        run: |
+          git clone https://github.com/MadLadSquad/UntitledImGuiFramework --recursive
+          cd UntitledImGuiFramework || exit
+          ./install.sh ci
+          cd Projects || exit
+          git clone https://github.com/MadLadSquad/UImGuiDemo.git --recursive
+          cd ../UVKBuildTool/build || exit
+          ./UVKBuildTool --generate ../../Projects/UImGuiDemo/
+          cd ../../Projects/UImGuiDemo || exit
+
+          git clone https://github.com/libsdl-org/SDL --recursive
+          echo "\
+          function(custom_setup_step)
+            set(SDL_AUDIO_DEFAULT OFF)
+            set(SDL_GPU_DEFAULT OFF)
+            set(SDL_RENDER_DEFAULT OFF)
+            set(SDL_CAMERA_DEFAULT OFF)
+            set(SDL_JOYSTICK_DEFAULT OFF)
+            set(SDL_HAPTIC_DEFAULT OFF)
+            set(SDL_HIDAPI_DEFAULT OFF)
+            set(SDL_POWER_DEFAULT OFF)
+            set(SDL_SENSOR_DEFAULT OFF)
+            set(SDL_DIALOG_DEFAULT OFF)
+            set(SDL_TRAY_DEFAULT OFF)
+          
+            set(SDL_AUDIO OFF)
+            set(SDL_GPU OFF)
+            set(SDL_RENDER OFF)
+            set(SDL_CAMERA OFF)
+            set(SDL_JOYSTICK OFF)
+            set(SDL_HAPTIC OFF)
+            set(SDL_HIDAPI OFF)
+            set(SDL_POWER OFF)
+            set(SDL_SENSOR OFF)
+            set(SDL_DIALOG OFF)
+            set(SDL_TRAY OFF)
+          
+            set(SDL_TEST_LIBRARY OFF)
+            set(SDL_TESTS OFF)
+            set(SDL_EXAMPLES OFF)
+          
+            add_subdirectory(SDL/)
+          endfunction()
+          
+          function(custom_compile_step)
+            if (EMSCRIPTEN)
+              multicast(target_link_options PRIVATE "-sUSE_SDL=3")
+              target_link_libraries(UImGuiDemo SDL3::SDL3-static)
+            elseif (WIN32)
+              target_link_libraries(UntitledImGuiFramework SDL3)
+            else ()
+              target_link_libraries(UImGuiDemoLib SDL3)
+            endif ()
+            include_directories(SDL/include/)
+          endfunction()
+          
+          set(ENABLE_PRE_SCRIPT ON)
+          set(ENABLE_POST_SCRIPT ON)" > Config/cmake/UImGuiDemo.cmake
+          
+          cd Source/ || exit
+          git clone https://github.com/MadLadSquad/UImGuiSDL --recursive
+          cd .. || exit
+          
+          git clone https://github.com/ocornut/imgui.git --recursive
+          cd imgui || exit
+          git checkout docking
+          cd .. || exit
+          
+          cp imgui/backends/imgui_impl_sdl3.{cpp,h} Source/UImGuiSDL
+          rm -rf imgui/
+      - name: Build
+        shell: bash
+        run: |
+          cd UntitledImGuiFramework/Projects/UImGuiDemo/ || exit
+          mkdir build
+          cd build || exit
+          emcmake cmake .. -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=RELEASE
+          make -j "$(grep -c processor /proc/cpuinfo 2> /dev/null)"

@@ -109,22 +109,21 @@ void* UImGuiSDL::MonitorSDL::getPlatformHandle(UImGui::MonitorData& data) noexce
                )
     );
 #elifdef __APPLE__
-    return reinterpret_cast<void*>(glfwGetCocoaMonitor(reinterpret_cast<GLFWmonitor*>(data.id)));
+    return reinterpret_cast<void*>(data.id);
 #else
     if (UImGui::Window::Platform::getCurrentWindowPlatform() == UIMGUI_WINDOW_PLATFORM_WAYLAND)
     {
-
         const auto props = SDL_GetDisplayProperties(data.id);
-        void* result;
-        if (SDL_GetPointerProperty(props, SDL_PROP_DISPLAY_WAYLAND_WL_OUTPUT_POINTER, &result))
+        void* result = nullptr;
+        result = SDL_GetPointerProperty(props, SDL_PROP_DISPLAY_WAYLAND_WL_OUTPUT_POINTER, &result);
+        if (result != nullptr)
             return result;
     }
     if (UImGui::Window::Platform::getCurrentWindowPlatform() == UIMGUI_WINDOW_PLATFORM_X11)
     {
         const auto props = SDL_GetWindowProperties(static_cast<SDL_Window*>(UImGui::Window::getInternal()));
-        void* result;
-        if (SDL_GetPointerProperty(props, SDL_PROP_WINDOW_X11_SCREEN_NUMBER, &result))
-            return result;
+        void* result = nullptr;
+        return SDL_GetPointerProperty(props, SDL_PROP_WINDOW_X11_SCREEN_NUMBER, &result);
     }
     return nullptr;
 #endif

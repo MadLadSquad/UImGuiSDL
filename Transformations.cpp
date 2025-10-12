@@ -93,15 +93,29 @@ void UImGuiSDL::WindowSDL::pushWindowContentScaleCallback(const std::function<vo
     windowContentScaleChangeCallbackList.push_back(f);
 }
 
-void UImGuiSDL::WindowSDL::setSizeLimits(const UImGui::FVector2 min, const UImGui::FVector2 max) noexcept
+// SDL uses 0.0f for no limit instead of -1.0f as in GLFW
+static void sanitiseSizeLimits(UImGui::FVector2& size)
 {
-    SDL_SetWindowMinimumSize(window, min.x, min.y);
-    SDL_SetWindowMaximumSize(window, max.x, max.y);
+    size.x = size.x < 1 ? 0.0f : size.x;
+    size.y = size.y < 1 ? 0.0f : size.y;
 }
 
-void UImGuiSDL::WindowSDL::setSizeLimitByAspectRatio(const UImGui::FVector2 ratio) noexcept
+void UImGuiSDL::WindowSDL::setSizeLimits(UImGui::FVector2 min, UImGui::FVector2 max) noexcept
 {
-    SDL_SetWindowAspectRatio(window, ratio.x / ratio.y, ratio.x / ratio.y);
+    sanitiseSizeLimits(min);
+    sanitiseSizeLimits(max);
+
+    SDL_SetWindowMinimumSize(window, CAST(int, min.x), CAST(int, min.y));
+    SDL_SetWindowMaximumSize(window, CAST(int, max.x), CAST(int, max.y));
+}
+
+void UImGuiSDL::WindowSDL::setSizeLimitByAspectRatio(UImGui::FVector2 ratio) noexcept
+{
+    sanitiseSizeLimits(ratio);
+    float result = ratio.x / ratio.y;
+    if (result != result)
+        result = 0.0f;
+    SDL_SetWindowAspectRatio(window, result, result);
 }
 
 UImGui::FVector4& UImGuiSDL::WindowSDL::getSizeLimits() noexcept

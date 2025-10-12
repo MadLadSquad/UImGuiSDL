@@ -4,7 +4,7 @@
 #ifdef _WIN32
 #elifdef __APPLE__
     #include <OpenGL/GL.h>
-    #include "../GenericWindow/macOS/MacOSWindowPlatform.h"
+    #include "Framework/Window/GenericWindow/macOS/MacOSWindowPlatform.h"
 #elifndef __EMSCRIPTEN__
     #if __has_include(<wayland-client.h>)
         #include <wayland-client.h>
@@ -31,7 +31,10 @@ void UImGuiSDL::WindowSDL::Platform_setWindowAlwaysOnBottom() noexcept
     SetWindowPos(win, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
     //DefWindowProcA(win, WM_WINDOWPOSCHANGING, 0, 0);
 #elifdef __APPLE__
-    MacOSWindow::setWindowAlwaysBelow(glfwGetCocoaWindow(window));
+    const auto props = SDL_GetWindowProperties(window);
+    void* win = nullptr;
+    win = SDL_GetPointerProperty(props, SDL_PROP_WINDOW_COCOA_WINDOW_POINTER, win);
+    UImGui::MacOSWindow::setWindowAlwaysBelow(win);
 #elifndef __EMSCRIPTEN__
     if (Platform_getCurrentWindowPlatform() == UIMGUI_WINDOW_PLATFORM_X11)
     {
@@ -92,16 +95,6 @@ void UImGuiSDL::WindowSDL::Platform_setWindowAlwaysOnBottom() noexcept
     {
         // TODO: Implement for post-2.0
     }
-#endif
-#ifdef GLFW_EXPOSE_NATIVE_X11
-
-#endif
-#ifdef GLFW_EXPOSE_NATIVE_WAYLAND
-
-#endif
-#ifdef GLFW_EXPOSE_NATIVE_WIN32
-
-#elif defined(GLFW_EXPOSE_NATIVE_COCOA)
 #endif
 }
 
@@ -265,7 +258,9 @@ size_t UImGuiSDL::WindowSDL::Platform_getWindowID() noexcept
 #ifdef _WIN32
     return GetWindowLong(glfwGetWin32Window(window), GWL_ID);
 #elifdef __APPLE__
-    return (intptr_t)glfwGetCocoaWindow(window);
+    const auto props = SDL_GetWindowProperties(window);
+    void* win = nullptr;
+    return reinterpret_cast<intptr_t>(SDL_GetPointerProperty(props, SDL_PROP_WINDOW_COCOA_WINDOW_POINTER, win));
 #elifndef __EMSCRIPTEN__
     if (Platform_getCurrentWindowPlatform() == UIMGUI_WINDOW_PLATFORM_X11)
     {
@@ -315,7 +310,9 @@ size_t UImGuiSDL::WindowSDL::Platform_getWindowID() noexcept
 void* UImGuiSDL::WindowSDL::Platform_getNativeWindowHandle() noexcept
 {
 #ifdef __APPLE__
-    return glfwGetCocoaWindow(window);
+    const auto props = SDL_GetWindowProperties(window);
+    void* win = nullptr;
+    return SDL_GetPointerProperty(props, SDL_PROP_WINDOW_COCOA_WINDOW_POINTER, win);
 #elifdef _WIN32
     return glfwGetWin32Window(window);
 #elifdef __EMSCRIPTEN__

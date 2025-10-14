@@ -49,6 +49,7 @@ void UImGuiSDL::WindowSDL::handleEvent(::SDL_Event& e) noexcept
 
     case SDL_EVENT_WINDOW_METAL_VIEW_RESIZED:
     case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
+        updateEmscriptenRect();
         windowSizeS.x = static_cast<float>(e.window.data1);
         windowSizeS.y = static_cast<float>(e.window.data2);
 

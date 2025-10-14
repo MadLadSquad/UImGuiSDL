@@ -15,6 +15,71 @@ UImGuiSDL::WindowSDL::WindowSDL() noexcept
     //keys.fill(KeyStateReleased);
 }
 
+// Hack needed because SDL3 does not send a window resize event when the window gets launched with a size different than
+// the initial canvas size
+#ifdef __EMSCRIPTEN__
+EM_JS(int, get_bounding_client_rect, (
+  const char* selector,
+  double* x, double* y, double* width, double* height,
+  double* left, double* top, double* right, double* bottom
+), {
+  const sel = UTF8ToString(selector);
+  const el = document.querySelector(sel);
+  if (!el) return 0;
+  const r = el.getBoundingClientRect();
+  setValue(x,      r.x,      'double');
+  setValue(y,      r.y,      'double');
+  setValue(width,  r.width,  'double');
+  setValue(height, r.height, 'double');
+  setValue(left,   r.left,   'double');
+  setValue(top,    r.top,    'double');
+  setValue(right,  r.right,  'double');
+  setValue(bottom, r.bottom, 'double');
+  return 1;
+});
+
+EM_JS(void, set_element_clip_rect_viewport, (const char* selector, int x, int y, int w, int h), {
+  const sel = UTF8ToString(selector);
+  const el  = document.querySelector(sel);
+  if (!el) return;
+
+  // Create wrapper once
+  if (!el.__clipWrapper) {
+    const wrap = document.createElement('div');
+    wrap.style.position = 'fixed';
+    wrap.style.overflow = 'hidden';
+    wrap.style.pointerEvents = getComputedStyle(el).pointerEvents;
+    el.__clipWrapper = wrap;
+    // Move el inside wrapper, and ensure el is positioned relative to wrapper
+    const p = el.parentNode;
+    p && p.replaceChild(wrap, el);
+    wrap.appendChild(el);
+    el.style.position = 'absolute';
+    // Keep top-left of el aligned to wrapper by default
+    el.style.left = '0px';
+    el.style.top  = '0px';
+  }
+  const wrap = el.__clipWrapper;
+  wrap.style.left   = x + 'px';
+  wrap.style.top    = y + 'px';
+  wrap.style.width  = w + 'px';
+  wrap.style.height = h + 'px';
+});
+
+#endif
+
+void UImGuiSDL::WindowSDL::updateEmscriptenRect() noexcept
+{
+#ifdef __EMSCRIPTEN__
+    double x,y,w,h,l,t,r,b;
+    if (get_bounding_client_rect(UImGui::Renderer::data().emscriptenCanvas, &x,&y,&w,&h,&l,&t,&r,&b)) {
+        set_element_clip_rect_viewport(UImGui::Renderer::data().emscriptenCanvas, x, y, w, h);
+        SDL_SetWindowSize(window, w, h);
+        // numbers are in CSS pixels, relative to the viewport
+    }
+#endif
+}
+
 void UImGuiSDL::WindowSDL::createWindow() noexcept
 {
     // Load all config we need
@@ -35,6 +100,7 @@ void UImGuiSDL::WindowSDL::createWindow() noexcept
     SDL_SetHint(SDL_HINT_APP_NAME, UImGui::Instance::get()->applicationName.c_str());
     SDL_SetHint(SDL_HINT_VIDEO_WAYLAND_ALLOW_LIBDECOR, "1");
     SDL_SetHint(SDL_HINT_VIDEO_WAYLAND_PREFER_LIBDECOR, "1");
+    SDL_SetHint(SDL_HINT_EMSCRIPTEN_CANVAS_SELECTOR, UImGui::Renderer::data().emscriptenCanvas);
 
     Logger::log("Window settings configured", ULOG_LOG_TYPE_NOTE);
 
@@ -53,7 +119,14 @@ void UImGuiSDL::WindowSDL::createWindow() noexcept
     if (windowData.bMaximised)
         windowFlags |= SDL_WINDOW_MAXIMIZED;
 
-    window = SDL_CreateWindow(windowData.name.c_str(), static_cast<int>(windowSizeS.x), static_cast<int>(windowSizeS.y), windowFlags);
+    const float scale = SDL_GetDisplayContentScale(SDL_GetPrimaryDisplay());
+
+    window = SDL_CreateWindow(
+        windowData.name.c_str(),
+        static_cast<int>(windowSizeS.x * scale),
+        static_cast<int>(windowSizeS.y * scale),
+        windowFlags
+    );
     if (!window)
     {
         Logger::log("SDL window creation failed! Error: ", ULOG_LOG_TYPE_ERROR, SDL_GetError());
@@ -66,30 +139,12 @@ void UImGuiSDL::WindowSDL::createWindow() noexcept
     setIcon((UImGui::Instance::get()->initInfo.contentDir + windowData.iconLocation).c_str());
     setSizeLimits({ windowData.sizeLimits.x, windowData.sizeLimits.y }, { windowData.sizeLimits.z, windowData.sizeLimits.w });
     setSizeLimitByAspectRatio(windowData.aspectRatioSizeLimit);
+    SDL_SyncWindow(window);
+
+    updateEmscriptenRect();
 
     Logger::log("Window was created successfully", ULOG_LOG_TYPE_SUCCESS);
-
-    // Set framebuffer size
-    int x = 0, y = 0;
-    SDL_GetWindowSizeInPixels(window, &x, &y);
-    windowSizeS.x = x;
-    windowSizeS.y = y;
-
-    for (auto& a : windowResizeCallbackList)
-        a(x, y);
-
-    SDL_GetWindowSize(window, &x, &y);
-    windowSizeInScreenCoords.x = x;
-    windowSizeInScreenCoords.y = y;
-    for (auto& a : windowResizeInScreenCoordCallbackList)
-        a(x, y);
-
     UImGui::RendererUtils::getRenderer()->setupPostWindowCreation();
-
-    SDL_SetWindowSize(window, x + 1, y + 1);
-    SDL_SyncWindow(window);
-    SDL_SetWindowSize(window, x - 1, y - 1);
-    SDL_SyncWindow(window);
 }
 
 void UImGuiSDL::WindowSDL::destroyWindow() noexcept

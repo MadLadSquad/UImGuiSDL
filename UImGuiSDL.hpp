@@ -199,5 +199,7 @@ namespace UImGuiSDL
 
         bool bCurrentlyMaximised = false;
         bool bCurrentlyMinimised = false;
+
+        void updateEmscriptenRect() noexcept;
     };
 }

@@ -11,8 +11,7 @@ UImGuiSDL::WindowSDL::WindowSDL() noexcept
 {
     windowFlags = SDL_WINDOW_HIGH_PIXEL_DENSITY;
     monitor = dynamic_cast<UImGui::GenericMonitor*>(&sdlMonitor);
-    // TODO: Implement
-    //keys.fill(KeyStateReleased);
+    keys.fill(KeyStateReleased);
 }
 
 // Hack needed because SDL3 does not send a window resize event when the window gets launched with a size different than

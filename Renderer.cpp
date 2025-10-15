@@ -57,18 +57,17 @@ void UImGuiSDL::WindowSDL::pollEvents(double& now, double& deltaTime, double& la
     deltaTime = now - lastTime;
     lastTime = now;
 
-    // TODO: Implement
-    //for (auto& a : inputActionList)
-    //{
-    //    if (!a.keyCodes.empty())
-    //    {
-    //        for (const auto& f : a.keyCodes)
-    //            if (keys[f] != keys[a.keyCodes[0]])
-    //                goto finish_inner_loop;
-    //        a.state = keys[a.keyCodes[0]];
-    //    }
-    //    finish_inner_loop:;
-    //}
+    for (auto& a : inputActionList)
+    {
+        if (!a.keyCodes.empty())
+        {
+            for (const auto& f : a.keyCodes)
+                if (keys[f] != keys[a.keyCodes[0]])
+                    goto finish_inner_loop;
+            a.state = keys[a.keyCodes[0]];
+        }
+finish_inner_loop:;
+    }
 
     // Needs to be updated at every frame
     if (windowData.bSurfaceTransparent)

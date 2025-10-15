@@ -190,6 +190,8 @@ namespace UImGuiSDL
 
         SDL_Window* window = nullptr;
 
+        UImGui::TArray<CKeyState, 350> keys{};
+
         MonitorSDL sdlMonitor{};
         UImGui::TVector<UImGui::Monitor> monitors{};
 

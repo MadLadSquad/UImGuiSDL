@@ -168,7 +168,7 @@ jobs:
             elseif (WIN32)
               target_link_libraries(UntitledImGuiFramework SDL3::SDL3-static)
             else ()
-              target_link_libraries(UImGuiDemoLib SDL3::SDL3-static)
+              target_link_libraries(UImGuiDemoLib SDL3::SDL3)
             endif ()
             include_directories(SDL/include/)
           endfunction()

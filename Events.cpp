@@ -276,11 +276,11 @@ void UImGuiSDL::WindowSDL::handleEvent(::SDL_Event& e) noexcept
 
     case SDL_EVENT_QUIT:
     case SDL_EVENT_TERMINATING:
-    case SDL_EVENT_WINDOW_DESTROYED:
         bShouldClose = true;
         break;
 
     case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+    case SDL_EVENT_WINDOW_DESTROYED:
         if (e.window.windowID == SDL_GetWindowID(window))
             bShouldClose = true;
         break;

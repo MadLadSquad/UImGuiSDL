@@ -141,6 +141,8 @@ jobs:
             set(SDL_SENSOR_DEFAULT OFF)
             set(SDL_DIALOG_DEFAULT OFF)
             set(SDL_TRAY_DEFAULT OFF)
+            
+            set(SDL_X11_XSCRNSAVER OFF)
           
             set(SDL_AUDIO OFF)
             set(SDL_GPU OFF)

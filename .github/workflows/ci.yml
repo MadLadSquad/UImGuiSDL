@@ -19,6 +19,8 @@ jobs:
       - name: Get dependencies
         run: |
           brew install glfw yaml-cpp vulkan-headers vulkan-loader vulkan-tools vulkan-utility-libraries vulkan-validationlayers vulkan-extensionlayer sdl3
+      - name: Select Xcode Version
+        run: sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
       - name: Install framework
         shell: bash
         run: |

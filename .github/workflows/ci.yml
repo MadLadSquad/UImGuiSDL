@@ -76,7 +76,7 @@ jobs:
             else ()
               target_link_libraries(UImGuiDemoLib SDL3::SDL3-static)
               if (APPLE)
-                target_link_libraries(UImGuiDemoLib PUBLIC \"-framework GameController\")
+                target_link_libraries(UImGuiDemoLib \"-framework GameController\")
               endif()
             endif ()
             include_directories(SDL/include/)

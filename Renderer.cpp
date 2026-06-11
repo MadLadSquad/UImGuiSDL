@@ -5,6 +5,10 @@
 
 #include "imgui_impl_sdl3.h"
 
+#ifdef __APPLE__
+extern "C" void uimgui_sdl_update_macos_layer(void* nswin_ptr);
+#endif
+
 #ifndef __EMSCRIPTEN__
 void UImGuiSDL::WindowSDL::ImGuiInitFor_Vulkan() noexcept
 {
@@ -28,6 +32,9 @@ void UImGuiSDL::WindowSDL::ImGuiInstallCallbacks() noexcept
 
 void UImGuiSDL::WindowSDL::ImGuiNewFrame() noexcept
 {
+#ifdef __APPLE__
+    uimgui_sdl_update_macos_layer(Platform_getNativeWindowHandle());
+#endif
     ImGui_ImplSDL3_NewFrame();
 }
 

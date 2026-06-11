@@ -147,7 +147,7 @@ void UImGuiSDL::WindowSDL::refreshSettings() noexcept
     setTitle(windowData.name.c_str());
     setIcon(windowData.iconLocation.c_str());
 
-    setWindowSizeInScreenCoords(windowSizeS);
+    setWindowSizeInScreenCoords(windowSizeInScreenCoords);
     setWindowFullscreen(windowData.fullscreen);
     setWindowResizeable(windowData.bResizeable);
 

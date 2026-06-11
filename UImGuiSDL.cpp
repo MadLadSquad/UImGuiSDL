@@ -37,34 +37,6 @@ EM_JS(int, get_bounding_client_rect, (
   return 1;
 });
 
-EM_JS(void, set_element_clip_rect_viewport, (const char* selector, int x, int y, int w, int h), {
-  const sel = UTF8ToString(selector);
-  const el  = document.querySelector(sel);
-  if (!el) return;
-
-  // Create wrapper once
-  if (!el.__clipWrapper) {
-    const wrap = document.createElement('div');
-    wrap.style.position = 'fixed';
-    wrap.style.overflow = 'hidden';
-    wrap.style.pointerEvents = getComputedStyle(el).pointerEvents;
-    el.__clipWrapper = wrap;
-    // Move el inside wrapper, and ensure el is positioned relative to wrapper
-    const p = el.parentNode;
-    p && p.replaceChild(wrap, el);
-    wrap.appendChild(el);
-    el.style.position = 'absolute';
-    // Keep top-left of el aligned to wrapper by default
-    el.style.left = '0px';
-    el.style.top  = '0px';
-  }
-  const wrap = el.__clipWrapper;
-  wrap.style.left   = x + 'px';
-  wrap.style.top    = y + 'px';
-  wrap.style.width  = w + 'px';
-  wrap.style.height = h + 'px';
-});
-
 #endif
 
 void UImGuiSDL::WindowSDL::updateEmscriptenRect() noexcept
@@ -72,7 +44,6 @@ void UImGuiSDL::WindowSDL::updateEmscriptenRect() noexcept
 #ifdef __EMSCRIPTEN__
     double x,y,w,h,l,t,r,b;
     if (get_bounding_client_rect(UImGui::Renderer::data().emscriptenCanvas, &x,&y,&w,&h,&l,&t,&r,&b)) {
-        set_element_clip_rect_viewport(UImGui::Renderer::data().emscriptenCanvas, x, y, w, h);
         SDL_SetWindowSize(window, w, h);
         // numbers are in CSS pixels, relative to the viewport
     }

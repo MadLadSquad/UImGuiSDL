@@ -45,7 +45,7 @@ void UImGuiSDL::WindowSDL::ImGuiShutdown() noexcept
 
 bool UImGuiSDL::WindowSDL::shouldRender() noexcept
 {
-    return bShouldClose;
+    return !bShouldClose;
 }
 
 void UImGuiSDL::WindowSDL::pollEvents(double& now, double& deltaTime, double& lastTime) noexcept
